@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tailwindcss/vite": "^4.1.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -17,9 +18,11 @@
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-tsparticles": "^2.12.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
-    "tesseract.js": "^6.0.1"
+    "tesseract.js": "^6.0.1",
+    "tsparticles": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

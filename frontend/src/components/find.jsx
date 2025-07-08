@@ -117,6 +117,7 @@ export default function Find() {
   };
 
   return (
+
     <div className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200 p-5 flex flex-col items-center">
       <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">Find My Druggist</h1>
 
