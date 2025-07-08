@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Tesseract from "tesseract.js";
-import "../Styles/Find.css";
 import logoImg from "../img/tatamg.png";
+import phlogo from "../img/images.png"
 
 export default function Find() {
   const [image, setImage] = useState(null);
@@ -70,27 +70,66 @@ export default function Find() {
     }
   };
 
-const handleOCR = () => {
-  if (!image) return;
+  const handleOCR = () => {
+    if (!image) return;
 
-  setLoading(true);
-  setOcrText(["Searching Web..."]);
-  setScrapedResults([]);
+    setLoading(true);
+    setOcrText(["Searching Web..."]);
+    setScrapedResults([]);
+
+    Tesseract.recognize(image, "eng", {
+      logger: (m) => console.log(m),
+    })
+      .then(async ({ data: { text } }) => {
+        console.log("OCR Extracted Text:", text);
+        const matched = matchMedicinesFromOCR(text);
+        setOcrText(matched.length > 0 ? matched : ["No known medicines found."]);
+
+        if (matched.length > 0) {
+          try {
+            console.log("Sending to backend:", matched);
+            const res = await fetch("http://localhost:5000/api/scrape", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ medicines: matched }),
+            });
+            
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            
+            const data = await res.json();
+            console.log("Received from backend:", data);
+            setScrapedResults(data);
+          } catch (err) {
+            console.error("Scraping failed:", err);
+            setOcrText(prev => [...prev, "Failed to fetch product details."]);
+          }
+        }
+
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("OCR error:", err);
+        setOcrText(["Failed to extract text."]);
+        setLoading(false);
+      });
+  };
 
   return (
-    <div className="container">
-      <h1 className="heading">Find My Druggist</h1>
+    <div className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200 p-5 flex flex-col items-center">
+      <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">Find My Druggist</h1>
 
       <div
-        className="drop-zone"
+        className={`w-full max-w-md h-64 border-4 border-dashed border-blue-500 bg-white rounded-xl flex items-center justify-center relative overflow-hidden cursor-pointer transition-colors ${image ? '' : 'hover:bg-blue-50'}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onClick={handleClickToUpload}
       >
         {image ? (
-          <div className="image-preview-wrapper">
+          <div className="relative w-full h-full flex items-center justify-center">
             <button
-              className="close-btn"
+              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xl w-8 h-8 rounded-full flex items-center justify-center z-10 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 handleRemoveImage();
@@ -98,31 +137,120 @@ const handleOCR = () => {
             >
               &times;
             </button>
-            <img src={image} alt="Preview" className="preview-image" />
+            <img src={image} alt="Preview" className="max-w-full max-h-full object-contain rounded-lg" />
           </div>
         ) : (
-          <div className="upload-text">
-            <p>Drag & Drop Image Here</p>
-            <p>or Click to Upload</p>
+          <div className="text-center text-gray-600 pointer-events-none">
+            <p className="text-lg">Drag & Drop Image Here</p>
+            <p className="text-lg">or Click to Upload</p>
           </div>
         )}
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          className="file-input"
+          className="hidden"
           ref={fileInputRef}
         />
       </div>
 
       {image && (
-        <button className="ocr-button" onClick={handleOCR} disabled={loading}>
+        <button
+          className={`mt-6 px-6 py-2 rounded-lg font-bold text-white transition-colors ${loading ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'}`}
+          onClick={handleOCR}
+          disabled={loading}
+        >
           {loading ? "Processing..." : "Search"}
         </button>
       )}
 
       {ocrText.length > 0 && (
+        <div className="w-full max-w-6xl mt-8 flex flex-col md:flex-row gap-6">
+          <div className="flex-1 bg-gray-50 p-6 rounded-xl shadow-sm">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Matched Medicines</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ocrText.map((name, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex justify-center mb-3">
+                    <img src={logoImg} alt="logo" className="w-12 h-12 object-contain" />
+                  </div>
+                  <div className="font-medium text-gray-800 text-center mb-3">{name}</div>
+                  {name !== "No known medicines found." &&
+                    name !== "Failed to extract text." &&
+                    name !== "Searching Web..." && (
+                      <a
+                        href={`https://www.1mg.com/search/all?name=${encodeURIComponent(name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-center px-3 py-1 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors"
+                      >
+                        Buy now
+                      </a>
+                    )}
+                </div>
 
+                
+              ))}
+            </div>
+
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ocrText.map((name, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex justify-center mb-3">
+                    <img src={phlogo} alt="logo" className="w-12 h-12 object-contain" />
+                  </div>
+                  <div className="font-medium text-gray-800 text-center mb-3">{name}</div>
+                  {name !== "No known medicines found." &&
+                    name !== "Failed to extract text." &&
+                    name !== "Searching Web..." && (
+                      <a
+                        href={`https://pharmeasy.in/search/all?name=${encodeURIComponent(name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-center px-3 py-1 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors"
+                      >
+                        Buy now
+                      </a>
+                    )}
+                </div>
+
+                
+              ))}
+            </div>
+          </div>
+
+
+
+          
+
+          <div className="flex-1 bg-gray-50 p-6 rounded-xl shadow-sm">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Available Products</h2>
+            {scrapedResults.map(({ query, results }, idx) => (
+              <div key={idx} className="mb-6">
+                <h3 className="text-xl font-medium text-gray-700 mb-3">{query}</h3>
+                {results.length === 0 && <p className="text-gray-500">No results found.</p>}
+                <div className="space-y-3">
+                  {results.map((item, i) => (
+                    <div key={i} className="bg-white p-4 rounded-lg shadow">
+                      <p className="font-semibold text-gray-800">{item.name}</p>
+                      <p className="text-gray-600">Price: ₹{item.price}</p>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm font-medium hover:bg-blue-600 transition-colors"
+                      >
+                        Buy on {item.source}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
