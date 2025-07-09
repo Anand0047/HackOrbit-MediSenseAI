@@ -1,11 +1,30 @@
 import React, { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { 
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Textarea } from "../components/ui/textarea";
+import { Badge } from "../components/ui/badge";
+import { 
+  Activity,
+  AlertTriangle,
+  Stethoscope,
+  Home,
+  ClipboardList,
+  Thermometer,
+  HeartPulse
+} from "lucide-react";
 
 const Chat = () => {
   const [symptoms, setSymptoms] = useState("");
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = ""; 
+  const API_KEY = "AIzaSyAanJAL8uUfDkdRBFLteXeL-h2MEbFmKpc";
 
   const analyzeSymptoms = async () => {
     if (!symptoms.trim()) return;
@@ -72,114 +91,177 @@ const Chat = () => {
   };
 
   // Severity color mapping
-  const severityColors = {
-    emergency: "bg-red-100 border-red-500 text-red-800",
-    severe: "bg-orange-100 border-orange-500 text-orange-800",
-    moderate: "bg-yellow-100 border-yellow-500 text-yellow-800",
-    mild: "bg-blue-100 border-blue-500 text-blue-800",
-    error: "bg-gray-100 border-gray-500 text-gray-800"
+  const severityData = {
+    emergency: {
+      color: "bg-red-50 border-red-200 text-red-900",
+      icon: <AlertTriangle className="h-5 w-5 text-red-600" />,
+      badge: "bg-red-600 text-white"
+    },
+    severe: {
+      color: "bg-orange-50 border-orange-200 text-orange-900",
+      icon: <Thermometer className="h-5 w-5 text-orange-600" />,
+      badge: "bg-orange-500 text-white"
+    },
+    moderate: {
+      color: "bg-yellow-50 border-yellow-200 text-yellow-900",
+      icon: <Activity className="h-5 w-5 text-yellow-600" />,
+      badge: "bg-yellow-500 text-black"
+    },
+    mild: {
+      color: "bg-blue-50 border-blue-200 text-blue-900",
+      icon: <HeartPulse className="h-5 w-5 text-blue-600" />,
+      badge: "bg-blue-500 text-white"
+    },
+    error: {
+      color: "bg-gray-50 border-gray-200 text-gray-900",
+      icon: <AlertTriangle className="h-5 w-5 text-gray-600" />,
+      badge: "bg-gray-500 text-white"
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
       {/* Input Section */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">AI Health Consultant</h2>
-        <p className="text-gray-600 mb-6">Describe your symptoms for medical analysis</p>
-        
-        <form onSubmit={handleSubmit} className="mb-6">
-          <div className="flex flex-col space-y-4">
-            <textarea
-              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows="4"
-              placeholder="Example: 'Sharp chest pain when breathing deeply'"
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Stethoscope className="h-8 w-8 text-blue-600" />
+            <CardTitle className="text-2xl font-bold text-gray-800">AI Health Consultant</CardTitle>
+          </div>
+          <p className="text-gray-600">Describe your symptoms for medical analysis</p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Textarea
+              className="min-h-[120px] text-base"
+              placeholder="Example: 'Sharp chest pain when breathing deeply, lasting for 30 minutes'"
               value={symptoms}
               onChange={(e) => setSymptoms(e.target.value)}
               disabled={isLoading}
             />
-            <button
-              type="submit"
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition duration-200 self-end"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Analyzing...
-                </span>
-              ) : "Analyze Symptoms"}
-            </button>
-          </div>
-        </form>
-      </div>
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                className="gap-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <ClipboardList className="h-4 w-4" />
+                    Analyze Symptoms
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Results Section */}
       {response && (
         <div className="space-y-6">
           {/* Symptoms Display */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Your Symptoms:</h3>
-            <p className="text-gray-700">{response.symptoms}</p>
-          </div>
-
-          {/* Severity Container */}
-          <div className={`rounded-xl p-6 border-l-4 ${severityColors[response.severity] || severityColors.error}`}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Severity Assessment</h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                response.severity === "Emergency" ? "bg-red-500 text-white" :
-                response.severity === "Severe" ? "bg-orange-500 text-white" :
-                response.severity === "moderate" ? "bg-yellow-500 text-black" :
-                response.severity === "mild" ? "bg-blue-500 text-white" :
-                "bg-gray-500 text-white"
-              }`}>
-                {response.severity}
-              </span>
-            </div>
-          </div>
-
-          {/* Summary Container */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Condition Summary</h3>
-            <p className="text-gray-700">{response.summary}</p>
-          </div>
-
-          {/* Action Container */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Recommended Action</h3>
-            <p className="text-gray-700 mb-4">{response.advice}</p>
-            
-            {response.doctor_specialist && (
-              <div className="mb-4">
-                <h4 className="font-medium text-gray-800 mb-1">Consult:</h4>
-                <p className="text-gray-700">{response.doctor_specialist}</p>
-                <button className="mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-                  Find {response.doctor_specialist}
-                </button>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Thermometer className="h-5 w-5 text-gray-600" />
+                <h3 className="text-lg font-semibold">Your Symptoms</h3>
               </div>
-            )}
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 pl-7">{response.symptoms}</p>
+            </CardContent>
+          </Card>
 
-            {response.home_remedy && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-1">Home Care:</h4>
-                <p className="text-blue-700">{response.home_remedy}</p>
+          {/* Severity Assessment */}
+          <Card className={severityData[response.severity]?.color || severityData.error.color}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {severityData[response.severity]?.icon || severityData.error.icon}
+                  <h3 className="text-lg font-semibold">Severity Assessment</h3>
+                </div>
+                <Badge variant="outline" className={severityData[response.severity]?.badge || severityData.error.badge}>
+                  {response.severity.toUpperCase()}
+                </Badge>
               </div>
-            )}
-          </div>
+            </CardHeader>
+          </Card>
+
+          {/* Condition Summary */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-gray-600" />
+                <h3 className="text-lg font-semibold">Condition Summary</h3>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 pl-7">{response.summary}</p>
+            </CardContent>
+          </Card>
+
+          {/* Recommended Action */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-gray-600" />
+                <h3 className="text-lg font-semibold">Recommended Action</h3>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700 pl-7">{response.advice}</p>
+              
+              {response.doctor_specialist && (
+<div className="pl-7 space-y-2">
+  <div className="flex items-center gap-2">
+    <Stethoscope className="h-4 w-4 text-indigo-600" />
+    <h4 className="font-medium text-gray-800">Consult Specialist:</h4>
+  </div>
+  <p className="text-gray-700 pl-6">{response.doctor_specialist}</p>
+  {!/(^|\s)(not|unable|cannot|can't|don't|doesn't|no\s)/i.test(response.doctor_specialist) && (
+    <Button variant="outline" className="ml-6 gap-2">
+      <Stethoscope className="h-4 w-4" />
+      Find {response.doctor_specialist.trim().split(/\s+/)[0]}
+    </Button>
+  )}
+</div>
+              )}
+
+              {response.home_remedy && (
+                <Card className="bg-blue-50 border-blue-200 ml-7">
+                  <CardHeader className="py-3">
+                    <div className="flex items-center gap-2">
+                      <Home className="h-4 w-4 text-blue-600" />
+                      <h4 className="font-medium text-blue-800">Home Care</h4>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-blue-700">{response.home_remedy}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Emergency Warning */}
           {response.severity === "emergency" && (
-            <div className="bg-red-600 text-white p-4 rounded-lg text-center animate-pulse">
-              <div className="flex items-center justify-center space-x-2">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <p className="font-bold">EMERGENCY: CALL 108/911 IMMEDIATELY</p>
-              </div>
-            </div>
+            <Card className="bg-red-600 border-red-700 text-white">
+              <CardHeader className="py-4">
+                <div className="flex items-center justify-center gap-3">
+                  <AlertTriangle className="h-6 w-6" />
+                  <h3 className="text-lg font-bold text-center">EMERGENCY: CALL 108 IMMEDIATELY</h3>
+                </div>
+              </CardHeader>
+            </Card>
           )}
         </div>
       )}

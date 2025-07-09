@@ -1,71 +1,91 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion"; // Import Framer Motion
 import Find from "./find.jsx";
 import Chat from "./chat.jsx";
+import Blog from "./BlogPage.jsx";
+import { Link } from "react-router-dom";
+import { Pill, HeartPulse, BookOpen } from "lucide-react";
 
 const Landing = () => {
   const [activeComponent, setActiveComponent] = useState("chat"); 
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <motion.div // Wrap entire page with motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 p-6"
+    >
       {/* Header with logo and login button */}
-      <header className="flex justify-between items-center mb-16">
-        <h1 className="text-3xl font-bold text-gray-800">MediSense AI</h1>
-        <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-md transition duration-200">
-          login
-        </button>
-      </header>
-
-      {/* Horizontal button group with glass effect */}
-      <div className="flex justify-center gap-4 mb-16">
-        <button 
-          className={`px-8 py-3 ${activeComponent === 'chat' ? 'bg-white/40' : 'bg-white/20'} backdrop-blur-md border border-black/30 hover:bg-white/30 text-black font-medium shadow-lg transition duration-200`}
-          onClick={() => setActiveComponent('chat')}
-        >
-          AI Health Consultant
-        </button>
-        
-        <button 
-          className={`px-8 py-3 ${activeComponent === 'find' ? 'bg-white/40' : 'bg-white/20'} backdrop-blur-md border border-black/30 hover:bg-white/30 text-black font-medium shadow-lg transition duration-200`}
-          onClick={() => setActiveComponent('find')}
-        >
-          Find my druggist
-        </button>
-
-        <button 
-          className={`px-8 py-3 ${activeComponent === 'health' ? 'bg-white/40' : 'bg-white/20'} backdrop-blur-md border border-black/30 hover:bg-white/30 text-black font-medium shadow-lg transition duration-200`}
-          onClick={() => setActiveComponent('health')}
-        >
-          Health records
-        </button>
-        
-        <button 
-          className={`px-8 py-3 ${activeComponent === 'blog' ? 'bg-white/40' : 'bg-white/20'} backdrop-blur-md border border-black/30 hover:bg-white/30 text-black font-medium shadow-lg transition duration-200`}
-          onClick={() => setActiveComponent('blog')}
-        >
-          Blog
-        </button>
-      </div>
-
-      {/* Container for active component */}
-      <div className="mx-[10%] mb-16">
-        <div className="bg-white/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-gray-200">
-          {activeComponent === 'chat' && <Chat />}
-          {activeComponent === 'find' && <Find />}
-          {activeComponent === 'health' && (
-            <div className="text-center py-10">
-              <h3 className="text-xl font-semibold mb-2">Health Records</h3>
-              <p className="text-gray-600">This feature is coming soon</p>
-            </div>
-          )}
-          {activeComponent === 'blog' && (
-            <div className="text-center py-10">
-              <h3 className="text-xl font-semibold mb-2">Blog</h3>
-              <p className="text-gray-600">This feature is coming soon</p>
-            </div>
-          )}
+      <motion.header 
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="flex justify-between items-center mb-8"
+      >
+        <div className="flex items-center">
+          <Pill className="h-8 w-8 text-blue-600 mr-2" />
+          <h1 className="text-3xl font-bold text-gray-800">MediSense AI</h1>
         </div>
-      </div>
-    </div>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white font-medium rounded-full shadow-md transition duration-200"
+        >
+          Login
+        </motion.button>
+      </motion.header>
+
+      {/* Capsule-shaped navigation buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="flex justify-center gap-6 mb-8"
+      >
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link 
+            to="/find"
+            className="flex items-center justify-center px-6 py-3 bg-white border-2 border-blue-200 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hover:bg-blue-50"
+            onClick={() => setActiveComponent('find')}
+          >
+            <Pill className="h-5 w-5 text-blue-600 mr-2" />
+            <span className="text-gray-700 font-medium">Find My Druggist</span>
+          </Link>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <button 
+            className="flex items-center justify-center px-6 py-3 bg-white border-2 border-blue-200 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hover:bg-blue-50"
+            onClick={() => setActiveComponent('health')}
+          >
+            <HeartPulse className="h-5 w-5 text-pink-600 mr-2" />
+            <span className="text-gray-700 font-medium">Health Records</span>
+          </button>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link 
+            to="/blog"
+            className="flex items-center justify-center px-6 py-3 bg-white border-2 border-blue-200 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hover:bg-blue-50"
+            onClick={() => setActiveComponent('blog')}
+          >
+            <BookOpen className="h-5 w-5 text-green-600 mr-2" />
+            <span className="text-gray-700 font-medium">Blog</span>
+          </Link>
+        </motion.div>
+      </motion.div>
+
+      {/* Chat component with fade-in */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="mx-auto max-w-4xl"
+      >
+        <Chat />
+      </motion.div>
+    </motion.div>
   );
 };
 
