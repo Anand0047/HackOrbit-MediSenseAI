@@ -11,7 +11,6 @@ async function scrapePharmeasy(searchTerm) {
     const response = await axios.get(url, { headers, timeout: 10000 });
     const $ = cheerio.load(response.data);
 
-    // Get top 3 products
     const productCards = $('[data-testid="product-card"]').slice(0, 3);
     const results = [];
 
@@ -20,7 +19,6 @@ async function scrapePharmeasy(searchTerm) {
       const name = $card.find('[data-testid="product-name"]').text().trim();
       const priceText = $card.find('[data-testid="product-price"]').text().trim();
       const price = parseFloat(priceText.replace(/[^\d.]/g, ''));
-      // Correct anchor selection
       const anchor = $card.find('a[href^="/"]').first();
       const path = anchor.length ? anchor.attr('href') : null;
 
@@ -34,10 +32,10 @@ async function scrapePharmeasy(searchTerm) {
       }
     });
 
-    return results.length > 0 ? results : null;
+    return results;  // ✅ Always return array (even if empty)
   } catch (error) {
     console.error(`PharmEasy scraping error for "${searchTerm}":`, error.message);
-    return null;
+    return [];  // ✅ Always return array
   }
 }
 

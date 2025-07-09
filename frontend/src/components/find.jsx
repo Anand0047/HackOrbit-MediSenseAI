@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Tesseract from "tesseract.js";
+import { motion } from "framer-motion";
 import logoImg from "../img/tatamg.png";
 import phlogo from "../img/images.png";
 
@@ -81,49 +82,42 @@ export default function Find() {
       logger: (m) => console.log(m),
     })
       .then(async ({ data: { text } }) => {
-        console.log("OCR Extracted Text:", text);
         const matched = matchMedicinesFromOCR(text);
         setOcrText(matched.length > 0 ? matched : ["No known medicines found."]);
 
         if (matched.length > 0) {
           try {
-            console.log("Sending to backend:", matched);
             const res = await fetch("http://localhost:5000/api/scrape", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ medicines: matched }),
             });
-            
+
             if (!res.ok) {
               throw new Error(`HTTP error! status: ${res.status}`);
             }
-            
+
             const data = await res.json();
-            console.log("Received from backend:", data);
             setScrapedResults(data);
           } catch (err) {
-            console.error("Scraping failed:", err);
             setOcrText(prev => [...prev, "Failed to fetch product details."]);
           }
         }
 
         setLoading(false);
       })
-      .catch((err) => {
-        console.error("OCR error:", err);
+      .catch(() => {
         setOcrText(["Failed to extract text."]);
         setLoading(false);
       });
   };
 
-  // Filter out non-medicine messages
   const validMedicines = ocrText.filter(
     name => name !== "No known medicines found." && 
             name !== "Failed to extract text." && 
             name !== "Searching Web..."
   );
-  
-  // Check if we should show messages
+
   const showMessages = ocrText.some(
     name => name === "No known medicines found." || 
             name === "Failed to extract text." || 
@@ -131,8 +125,7 @@ export default function Find() {
   );
 
   return (
-    
-    <div className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200 p-5 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-r from-white-100 to-white-200 p-5 flex flex-col items-center">
       <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">Find My Druggist</h1>
 
       <div
@@ -181,9 +174,15 @@ export default function Find() {
 
       {ocrText.length > 0 && (
         <div className="w-full max-w-6xl mt-8 flex flex-col md:flex-row gap-6">
-          <div className="flex-1 bg-gray-50 p-6 rounded-xl shadow-sm">
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex-1 bg-gray-50 p-6 rounded-xl shadow-sm"
+          >
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">Matched Medicines</h2>
-            
+
             {showMessages && (
               <div className="text-center py-4 text-gray-500">
                 {ocrText.find(
@@ -193,18 +192,18 @@ export default function Find() {
                 )}
               </div>
             )}
-            
+
             {validMedicines.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {validMedicines.map((name, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
                   >
                     <div className="font-medium text-gray-800 text-center mb-4 border-b pb-3">
                       {name}
                     </div>
-                    
+
                     <div className="flex flex-col gap-3">
                       <a
                         href={`https://www.1mg.com/search/all?name=${encodeURIComponent(name)}`}
@@ -212,24 +211,24 @@ export default function Find() {
                         rel="noopener noreferrer"
                         className="flex items-center justify-center px-3 py-2 bg-blue-50 text-blue-800 rounded-lg hover:bg-blue-100 transition-colors group"
                       >
-                        <img 
-                          src={logoImg} 
-                          alt="1mg" 
-                          className="w-6 h-6 mr-2 transition-transform group-hover:scale-110" 
+                        <img
+                          src={logoImg}
+                          alt="1mg"
+                          className="w-6 h-6 mr-2 transition-transform group-hover:scale-110"
                         />
                         <span>1mg</span>
                       </a>
-                      
+
                       <a
                         href={`https://pharmeasy.in/search/all?name=${encodeURIComponent(name)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center px-3 py-2 bg-green-50 text-green-800 rounded-lg hover:bg-green-100 transition-colors group"
                       >
-                        <img 
-                          src={phlogo} 
-                          alt="PharmEasy" 
-                          className="w-6 h-6 mr-2 transition-transform group-hover:scale-110" 
+                        <img
+                          src={phlogo}
+                          alt="PharmEasy"
+                          className="w-6 h-6 mr-2 transition-transform group-hover:scale-110"
                         />
                         <span>PharmEasy</span>
                       </a>
@@ -238,68 +237,63 @@ export default function Find() {
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
-<div className="flex-1 bg-gray-50 p-6 rounded-xl shadow-sm">
-  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Available Products</h2>
-  {scrapedResults.length === 0 ? (
-    <p className="text-gray-500 text-center py-4">No products found. Try another image.</p>
-  ) : (
-    <div className="space-y-6">
-      {scrapedResults.map(({ query, results }, idx) => (
-        <div key={idx} className="bg-white rounded-lg p-4 shadow-md">
-          <h3 className="text-xl font-medium text-gray-700 mb-3">{query}</h3>
-          
-          {results.length === 0 ? (
-            <p className="text-gray-500">No products found for {query}</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {results.map((item, i) => (
-                <div 
-                  key={i} 
-                  className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
-                >
-                  <p className="font-semibold text-gray-800">{item.name}</p>
-                  <p className="text-gray-600 mt-1">Price: ₹{item.price.toFixed(2)}</p>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`mt-2 inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium w-full ${
-                      item.source === '1mg' 
-                        ? 'bg-blue-600 hover:bg-blue-700' 
-                        : 'bg-green-600 hover:bg-green-700'
-                    }`}
-                  >
-                    {item.source === '1mg' ? (
-                      <>
-                        <img 
-                          src={logoImg} 
-                          alt="1mg" 
-                          className="w-5 h-5 mr-2" 
-                        />
-                        Buy on 1mg
-                      </>
-                    ) : (
-                      <>
-                        <img 
-                          src={phlogo} 
-                          alt="PharmEasy" 
-                          className="w-5 h-5 mr-2" 
-                        />
-                        Buy on PharmEasy
-                      </>
-                    )}
-                  </a>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex-1 bg-gray-50 p-6 rounded-xl shadow-sm"
+          >
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Available Products</h2>
+            {scrapedResults.filter(({ results }) => results && results.length > 0).length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No products found. Try another image.</p>
+            ) : (
+              <div className="space-y-6">
+                {scrapedResults
+                  .filter(({ results }) => results && results.length > 0)
+                  .map(({ query, results }, idx) => (
+                    <div key={idx} className="bg-white rounded-lg p-4 shadow-md">
+                      <h3 className="text-xl font-medium text-gray-700 mb-3">{query}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {results.map((item, i) => (
+                          <div
+                            key={i}
+                            className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
+                          >
+                            <p className="font-semibold text-gray-800">{item.name}</p>
+                            <p className="text-gray-600 mt-1">Price: ₹{item.price.toFixed(2)}</p>
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`mt-2 inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium w-full ${
+                                item.source === '1mg'
+                                  ? 'bg-blue-600 hover:bg-blue-700'
+                                  : 'bg-green-600 hover:bg-green-700'
+                              }`}
+                            >
+                              {item.source === '1mg' ? (
+                                <>
+                                  <img src={logoImg} alt="1mg" className="w-5 h-5 mr-2" />
+                                  Buy on 1mg
+                                </>
+                              ) : (
+                                <>
+                                  <img src={phlogo} alt="PharmEasy" className="w-5 h-5 mr-2" />
+                                  Buy on PharmEasy
+                                </>
+                              )}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </motion.div>
+
         </div>
       )}
     </div>

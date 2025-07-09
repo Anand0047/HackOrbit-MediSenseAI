@@ -12,12 +12,11 @@ async function scrape1mg(searchTerm) {
     const response = await axios.get(url, { headers });
     const $ = cheerio.load(response.data);
 
-    // Try multiple selectors
     let productCard = $('.style__container___cTDz0, [data-testid="product-card"]').first();
     
     if (!productCard.length) {
       console.log('No product card found on 1mg');
-      return null;
+      return [];  // ✅ Return empty array instead of null
     }
 
     const name = productCard.find('.style__pro-title___3zxNC, [itemprop="name"]').text().trim();
@@ -25,17 +24,17 @@ async function scrape1mg(searchTerm) {
     const path = productCard.find('a').first().attr('href');
 
     if (name && price && path) {
-      return {
+      return [{
         source: '1mg',
         name,
         price: parseFloat(price),
         url: path.startsWith('http') ? path : `https://www.1mg.com${path}`
-      };
+      }];
     }
-    return null;
+    return [];  // ✅ Always return array
   } catch (error) {
     console.error(`1mg scraping error for "${searchTerm}":`, error.message);
-    return null;
+    return [];  // ✅ Always return array
   }
 }
 

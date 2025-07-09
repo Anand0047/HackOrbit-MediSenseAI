@@ -153,19 +153,30 @@ Medicines: [suggest medicine names only if severity is mild or moderate, else le
         <CardHeader>
           <div className="flex items-center gap-3">
             <Stethoscope className="h-8 w-8 text-blue-600" />
-            <CardTitle className="text-2xl font-bold text-gray-800">AI Health Consultant</CardTitle>
-          </div>
-          <p className="text-gray-600">Describe your symptoms for medical analysis</p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Textarea
-              className="min-h-[120px] text-base"
-              placeholder="Example: 'Sharp chest pain when breathing deeply, lasting for 30 minutes'"
-              value={symptoms}
-              onChange={(e) => setSymptoms(e.target.value)}
-              disabled={isLoading}
-            />
+              <CardTitle className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-400 tracking-wide">
+                AI Health Consultant
+              </CardTitle>
+              </div>
+                <p className="text-base font-medium text-gray-600 mt-2 tracking-wide italic animate-fadeIn">
+                  Describe your symptoms for medical analysis
+                </p>
+
+
+                </CardHeader>
+                       <CardContent>
+                          <form onSubmit={handleSubmit} className="space-y-4">
+                <Textarea
+                  className={`min-h-[120px] w-full text-base font-medium px-4 py-3 rounded-2xl border border-gray-300 
+                   bg-white/60 backdrop-blur-md shadow-md resize-none transition duration-300 ease-in-out 
+                    placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                    focus:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                 placeholder="Example: 'Sharp chest pain when breathing deeply, lasting for 30 minutes'"
+                 value={symptoms}
+                 onChange={(e) => setSymptoms(e.target.value)}
+                 disabled={isLoading}
+                />
+
+
             <div className="flex justify-end">
               <Button type="submit" className="gap-2" disabled={isLoading}>
                 {isLoading ? (

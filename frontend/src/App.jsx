@@ -7,6 +7,12 @@ import Find from "./components/find";
 import Chat from "./components/chat.jsx";
 import Article from "./components/ArticlePage";
 import Layout from './components/Layout';
+import ProtectedRoute from './Auth/ProtectedRoute';
+import Login from './Auth/login/Login';
+import Register from './Auth/register/Register';
+import ForgotPassword from './Auth/ForgotPassword';
+import ResetPassword from './Auth/ResetPassword';
+import VerifyResetOtp from './Auth/VerifyResetOtp';
 // import VantaBackground from './components/VantaBackground';
 
 const App = () => {
@@ -20,25 +26,54 @@ const App = () => {
           </Layout>
         } />
         <Route path='/chat' element={
-          <Layout showHealthTopics={true}>
-            <Chat />
-          </Layout>
+          <ProtectedRoute>
+            <Layout showHealthTopics={true}>
+              <Chat />
+            </Layout>
+          </ProtectedRoute>
         } />
         <Route path='/find' element={
-          <Layout showHealthTopics={true}>
-            <Find />
-          </Layout>
-        } />  
+          <ProtectedRoute>
+            <Layout showHealthTopics={true}>
+              <Find />
+            </Layout>
+          </ProtectedRoute>
+        } />
         <Route path='/blog' element={
-          <Layout showHealthTopics={true}>
-            <Blog />
-          </Layout>
+          <ProtectedRoute>
+            <Layout showHealthTopics={true}>
+              <Blog />
+            </Layout>
+          </ProtectedRoute>
         } />
         <Route path='/blog/:pageid' element={
-          <Layout>
-            <Article />
-          </Layout>
+          <ProtectedRoute>
+            <Layout>
+              <Article />
+            </Layout>
+          </ProtectedRoute>
         } />
+
+        {/* Authentication */}
+
+        <Route path='/login' element={<Login />} />
+
+        <Route path='/register' element={<Register />} />
+
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+
+        <Route path='/reset-password' element={
+          <ProtectedRoute>
+            <ResetPassword />
+          </ProtectedRoute>
+        } />
+
+        <Route path='/verify-reset-otp' element={
+          <ProtectedRoute>
+            <VerifyResetOtp />
+          </ProtectedRoute>
+        } />
+
       </Routes>
     </div>
   )

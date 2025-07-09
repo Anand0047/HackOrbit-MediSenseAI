@@ -5,17 +5,16 @@ async function compareMedicinePrices(searchTerm) {
   try {
     console.log(`Searching for: ${searchTerm}`);
     
-    // Call both scrapers in parallel
     const [results1mg, resultsPharmeasy] = await Promise.all([
       scrape1mg(searchTerm),
       scrapePharmeasy(searchTerm)
     ]);
 
-    // Combine results from both sources
-    const combinedResults = [];
-    if (results1mg) combinedResults.push(...results1mg);
-    if (resultsPharmeasy) combinedResults.push(...resultsPharmeasy);
-    
+    const combinedResults = [
+      ...(Array.isArray(results1mg) ? results1mg : []),
+      ...(Array.isArray(resultsPharmeasy) ? resultsPharmeasy : [])
+    ];
+
     console.log(`Results for ${searchTerm}:`, combinedResults);
     return combinedResults;
   } catch (error) {

@@ -7,6 +7,7 @@ import com.hackOrbit.mediSense.Auth.respository.UserRepository;
 import com.hackOrbit.mediSense.Auth.service.AuthService;
 import com.hackOrbit.mediSense.Auth.service.EmailService;
 import com.hackOrbit.mediSense.Auth.service.OtpService;
+import com.hackOrbit.mediSense.Auth.util.JwtUtil;
 import com.hackOrbit.mediSense.Auth.util.PasswordValidator;
 import com.hackOrbit.mediSense.Auth.util.RateLimit;
 import jakarta.validation.Valid;
@@ -36,6 +37,7 @@ public class AuthController {
     @Autowired private OtpService otpService;
     @Autowired private EmailService emailService;
     @Autowired private AuthService authService;
+    @Autowired private JwtUtil jwtUtil;
 
     // Temporary store for users pending OTP verification
     private final Map<String, RegisterRequest> tempUserStore = new ConcurrentHashMap<>();
@@ -66,6 +68,7 @@ public class AuthController {
     }
 
     // ========== Verify OTP ==========
+    // Update the verify-otp method
     @PostMapping("/verify-otp")
     @RateLimit(key = "verify-otp", maxRequests = 3, timeWindow = 60000)
     public ResponseEntity<?> verifyOtp(@RequestBody OtpVerificationRequest request) {
@@ -86,21 +89,29 @@ public class AuthController {
                         .provider("local")
                         .build();
 
-                userRepository.save(user);
+                User savedUser = userRepository.save(user);
                 logger.info("User created and saved: {}", user.getEmail());
                 otpService.clearOtp(request.getEmail(), OtpType.EMAIL_VERIFICATION);
                 tempUserStore.remove(request.getEmail());
 
-                return ResponseEntity.ok(Map.of("message", "Account verified successfully!"));
+                String token = jwtUtil.generateToken(savedUser);
+
+                return ResponseEntity.ok(Map.of(
+                        "token", token,
+                        "name", savedUser.getName(),
+                        "message", "Account verified successfully!"
+                ));
             } catch (Exception e) {
                 logger.error("Error saving user for email {}: {}", request.getEmail(), e.getMessage());
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to create user. Please try again later."));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("message", "Failed to create user. Please try again later."));
             }
         } else {
             logger.warn("Invalid OTP attempt for email: {}", request.getEmail());
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid OTP"));
         }
     }
+
 
     // ========== Resend OTP ==========
     @PostMapping("/resend-otp")
@@ -128,10 +139,30 @@ public class AuthController {
     }
 
     // ========== Login ==========
+    // Update the login method
     @PostMapping("/login")
     @RateLimit(key = "login", maxRequests = 5, timeWindow = 60000)
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Invalid credentials"));
+        }
+
+        User user = userOpt.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Invalid credentials"));
+        }
+
+        String token = jwtUtil.generateToken(user);
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "name", user.getName(),
+                "message", "Login successful"
+        ));
     }
 
     // ========== Forgot Password ==========
@@ -208,6 +239,7 @@ public class AuthController {
     }
 
     // ========== Save OAuth User ==========
+    // Update the OAuth endpoint
     @GetMapping("/oauth/save-user")
     public ResponseEntity<?> saveOAuthUser(@AuthenticationPrincipal OAuth2User oauthUser) {
         if (oauthUser == null) {
@@ -221,17 +253,26 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Email not found from OAuth provider"));
         }
 
-        if (!userRepository.existsByEmail(email)) {
-            User user = User.builder()
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        User user;
+
+        if (userOpt.isEmpty()) {
+            user = User.builder()
                     .name(name)
                     .email(email)
                     .password(null)
                     .provider("google")
                     .build();
-            userRepository.save(user);
+            user = userRepository.save(user);
+        } else {
+            user = userOpt.get();
         }
 
-        return ResponseEntity.ok(Map.of("message", "OAuth user saved"));
+        String token = jwtUtil.generateToken(user);
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header("Location", "http://localhost:5173/login?token=" + token + "&name=" + user.getName())
+                .build();
     }
 
 }
