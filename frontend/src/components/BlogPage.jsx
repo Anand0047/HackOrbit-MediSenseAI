@@ -26,6 +26,8 @@ import {
   Bone
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Swal from "sweetalert2";
+
 
 const categories = [
   { name: 'Medicine', icon: <Pill className="h-4 w-4 mr-2" />, searchTerm: 'medical treatments' },
@@ -126,11 +128,26 @@ export default function Blog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const navigate = useNavigate();
+  const [medicalTerms, setMedicalTerms] = useState([]);
+
+
+  useEffect(() => {
+  fetchDefaultArticles();
+  // Load valid terms
+  fetch('/data/blogsearch.json')
+    .then((res) => res.json())
+    .then((data) => setMedicalTerms(data.map(term => term.toLowerCase())))
+    .catch((err) => console.error('Failed to load medical terms:', err));
+}, []);
+
 
   useEffect(() => {
     fetchDefaultArticles();
   }, []);
 
+
+
+  
   const fetchDefaultArticles = async () => {
     setLoading(true);
     try {
@@ -145,6 +162,15 @@ export default function Blog() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const showAlert = () => {
+    Swal.fire({
+      icon: "error",
+      title: "Oops...",
+      text: "Something went wrong!",
+      footer: '<a href="#">Why do I have this issue?</a>'
+    });
   };
 
   const searchArticles = async (query) => {
@@ -197,9 +223,25 @@ export default function Blog() {
     return text.replace(/\[\d+\]/g, '').substring(0, 200) + '...';
   };
 
-  const handleSearch = () => {
-    searchArticles(searchQuery);
-  };
+ const handleSearch = () => {
+  const input = searchQuery.trim().toLowerCase();
+  if (!input) return;
+
+  // Check if input is part of any medical term (partial match)
+  const isValid = medicalTerms.some(term => term.includes(input));
+
+  if (!isValid) {
+Swal.fire({
+  icon: "error",
+  title: "oops...",
+  text: "Please search medical terms"
+  // footer: '<a href="#">Why do I have this issue?</a>'
+});    return;
+  }
+
+  searchArticles(searchQuery);
+};
+
 
   const filterByCategory = (category) => {
     setSelectedCategory(category.name);
@@ -214,6 +256,9 @@ export default function Blog() {
   return (
     <div className="container mx-auto px-4 py-12 bg-blue-50/30 dark:bg-gray-900 min-h-screen">
       {/* Hero Section */}
+
+
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -409,13 +454,14 @@ export default function Blog() {
                       <CardDescription className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
                         {article.extract}
                       </CardDescription>
-                      <Button 
-                        variant="link" 
-                        className="px-0 text-blue-600 dark:text-blue-400 hover:no-underline group"
-                      >
-                        Read more
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </Button>
+                  <Button 
+                    variant="link" 
+                    className="px-0 text-blue-600 dark:text-blue-400 hover:no-underline group"
+                    onClick={() => navigateToArticle(article.pageid)}
+                  >
+                    Read more
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -445,32 +491,7 @@ export default function Blog() {
       </motion.div>
 
       {/* CTA Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-        className="mt-16 bg-gradient-to-r from-blue-600 to-teal-500 rounded-2xl p-8 md:p-12 text-white"
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">Stay Updated with Medical Knowledge</h2>
-          <p className="text-lg mb-6 text-blue-100">
-            Subscribe to our newsletter for the latest health information and research updates
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <Input 
-              type="email" 
-              placeholder="Your email address" 
-              className="py-6 rounded-xl border-0 bg-white/20 placeholder:text-blue-200 focus:bg-white/30 focus:ring-2 focus:ring-white/50"
-            />
-            <Button 
-              className="py-6 rounded-xl bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 font-medium shadow-lg"
-            >
-              Subscribe
-            </Button>
-          </div>
-        </div>
-      </motion.div>
+
     </div>
   );
 }

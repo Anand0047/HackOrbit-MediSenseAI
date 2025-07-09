@@ -1,58 +1,90 @@
 import React, { useState } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { 
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
+import axios from "axios";
+import {
+  Card, CardHeader, CardTitle, CardContent, CardFooter,
 } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
-import { 
-  Activity,
-  AlertTriangle,
-  Stethoscope,
-  Home,
-  ClipboardList,
-  Thermometer,
-  HeartPulse
+import {
+  Activity, AlertTriangle, Stethoscope, Home,
+  ClipboardList, Thermometer, HeartPulse, Pill
 } from "lucide-react";
+import MapPopup from "./MapPopup"; 
 
 const Chat = () => {
   const [symptoms, setSymptoms] = useState("");
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = "AIzaSyAanJAL8uUfDkdRBFLteXeL-h2MEbFmKpc";
+  const [showMap, setShowMap] = useState(false);
+  const [mapType, setMapType] = useState("specialist");
+
+  const GROQ_API_KEY = "";
+  const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+  const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+
+  const detectLanguage = (text) => {
+    const tamil = /[\u0B80-\u0BFF]/;
+    const hindi = /[\u0900-\u097F]/;
+    if (tamil.test(text)) return "ta";
+    if (hindi.test(text)) return "hi";
+    return "en";
+  };
 
   const analyzeSymptoms = async () => {
     if (!symptoms.trim()) return;
-    
+
     setIsLoading(true);
-    
+    const lang = detectLanguage(symptoms.trim());
+
+    const languageInstruction = {
+      en: "Respond in English in this exact format:",
+      hi: "इस सटीक प्रारूप में हिंदी में उत्तर दें:",
+      ta: "இந்த பரிமாணத்தில் தமிழில் பதிலளிக்கவும்:"
+    };
+
+    const prompt = `Act as a medical professional. Analyze these symptoms: "${symptoms.trim()}".
+
+${languageInstruction[lang]}
+
+Always respond in this format:
+Severity: [mild/moderate/severe/emergency ]
+Summary: [brief summary (dont give any Symbol )]
+Recommended Action: [what to do]
+Specialist: [only mention the English name of the specialist if needed, or reply 'Not needed']
+Home Care: [if applicable]
+Medicines: [suggest medicine names only if severity is mild or moderate, else leave blank]`;
+
     try {
-      const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await axios.post(
+        GROQ_API_URL,
+        {
+          model: MODEL,
+          messages: [{ role: "user", content: prompt }],
+        },
+        {
+          headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      const prompt = `Act as a medical professional. Analyze these symptoms: "${symptoms.trim()}". 
-      Respond in this exact format:
-      
-      Severity: [mild/moderate/severe/emergency]
-      Summary: [brief summary]
-      Recommended Action: [what to do]
-      Specialist: [if needed]
-      Home Care: [if applicable]`;
+      const text = result.data.choices[0].message.content;
 
-      const result = await model.generateContent(prompt);
-      const textResponse = (await result.response).text();
-      
+      const extractValue = (text, key) => {
+        const regex = new RegExp(`${key}\\s*(.*?)(\\n|$)`);
+        const match = text.match(regex);
+        return match ? match[1].trim() : "";
+      };
+
       const parsedResponse = {
-        severity: extractValue(textResponse, "Severity:"),
-        summary: extractValue(textResponse, "Summary:"),
-        advice: extractValue(textResponse, "Recommended Action:"),
-        doctor_specialist: extractValue(textResponse, "Specialist:"),
-        home_remedy: extractValue(textResponse, "Home Care:"),
+        severity: extractValue(text, "Severity:").toLowerCase().trim(),
+        summary: extractValue(text, "Summary:"),
+        advice: extractValue(text, "Recommended Action:"),
+        doctor_specialist: extractValue(text, "Specialist:"),
+        home_remedy: extractValue(text, "Home Care:"),
+        medicines: extractValue(text, "Medicines:") 
       };
 
       if (symptoms.toLowerCase().match(/chest pain|breath|bleeding|unconscious|severe pain/)) {
@@ -67,7 +99,7 @@ const Chat = () => {
       });
 
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Groq API Error:", error);
       setResponse({
         severity: "error",
         summary: "Analysis failed",
@@ -79,18 +111,11 @@ const Chat = () => {
     }
   };
 
-  const extractValue = (text, key) => {
-    const regex = new RegExp(`${key}\\s*(.*?)(\\n|$)`);
-    const match = text.match(regex);
-    return match ? match[1].trim() : "";
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     analyzeSymptoms();
   };
 
-  // Severity color mapping
   const severityData = {
     emergency: {
       color: "bg-red-50 border-red-200 text-red-900",
@@ -119,9 +144,11 @@ const Chat = () => {
     }
   };
 
+  const isEmergencyOrSevere = ["emergency", "severe"].includes(response?.severity);
+  const isMildOrModerate = ["mild", "moderate"].includes(response?.severity);
+
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
-      {/* Input Section */}
+    <div className="max-w-4xl mx-auto bg-breathing p-4 md:p-6 space-y-6">
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -140,11 +167,7 @@ const Chat = () => {
               disabled={isLoading}
             />
             <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                className="gap-2"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="gap-2" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -165,10 +188,8 @@ const Chat = () => {
         </CardContent>
       </Card>
 
-      {/* Results Section */}
       {response && (
         <div className="space-y-6">
-          {/* Symptoms Display */}
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -181,7 +202,6 @@ const Chat = () => {
             </CardContent>
           </Card>
 
-          {/* Severity Assessment */}
           <Card className={severityData[response.severity]?.color || severityData.error.color}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -196,7 +216,6 @@ const Chat = () => {
             </CardHeader>
           </Card>
 
-          {/* Condition Summary */}
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -209,7 +228,6 @@ const Chat = () => {
             </CardContent>
           </Card>
 
-          {/* Recommended Action */}
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -219,21 +237,47 @@ const Chat = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-700 pl-7">{response.advice}</p>
-              
-              {response.doctor_specialist && (
-<div className="pl-7 space-y-2">
-  <div className="flex items-center gap-2">
-    <Stethoscope className="h-4 w-4 text-indigo-600" />
-    <h4 className="font-medium text-gray-800">Consult Specialist:</h4>
-  </div>
-  <p className="text-gray-700 pl-6">{response.doctor_specialist}</p>
-  {!/(^|\s)(not|unable|cannot|can't|don't|doesn't|no\s)/i.test(response.doctor_specialist) && (
-    <Button variant="outline" className="ml-6 gap-2">
-      <Stethoscope className="h-4 w-4" />
-      Find {response.doctor_specialist.trim().split(/\s+/)[0]}
-    </Button>
-  )}
-</div>
+
+              {isEmergencyOrSevere && response.doctor_specialist && response.doctor_specialist !== "Not needed" && (
+                <div className="pl-7 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-indigo-600" />
+                    <h4 className="font-medium text-gray-800">Consult Specialist:</h4>
+                  </div>
+                  <p className="text-gray-700 pl-6">{response.doctor_specialist}</p>
+                  <Button
+                    variant="outline"
+                    className="ml-6 gap-2"
+                    onClick={() => {
+                      setMapType("specialist");
+                      setShowMap(true);
+                    }}
+                  >
+                    <Stethoscope className="h-4 w-4" />
+                    Find {response.doctor_specialist.trim().split(/\s+/)[0]}
+                  </Button>
+                </div>
+              )}
+
+              {isMildOrModerate && response.medicines && (
+                <div className="pl-7 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Pill className="h-4 w-4 text-green-600" />
+                    <h4 className="font-medium text-gray-800">Suggested Medicines:</h4>
+                  </div>
+                  <p className="text-gray-700 pl-6">{response.medicines}</p>
+                  <Button
+                    variant="outline"
+                    className="ml-6 gap-2"
+                    onClick={() => {
+                      setMapType("pharmacy");
+                      setShowMap(true);
+                    }}
+                  >
+                    <Pill className="h-4 w-4" />
+                    Find Pharmacy
+                  </Button>
+                </div>
               )}
 
               {response.home_remedy && (
@@ -252,7 +296,6 @@ const Chat = () => {
             </CardContent>
           </Card>
 
-          {/* Emergency Warning */}
           {response.severity === "emergency" && (
             <Card className="bg-red-600 border-red-700 text-white">
               <CardHeader className="py-4">
@@ -262,6 +305,13 @@ const Chat = () => {
                 </div>
               </CardHeader>
             </Card>
+          )}
+
+          {showMap && (
+            <MapPopup
+              specialist={mapType === "specialist" ? response.doctor_specialist.trim().split(/\s+/)[0] : "pharmacy"}
+              onClose={() => setShowMap(false)}
+            />
           )}
         </div>
       )}
