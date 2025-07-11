@@ -1,4 +1,4 @@
-# 🧠 MediSense AI - Symptoms to action     ### Completed Full
+# 🧠 MediSense AI - Symptoms to action   
 
 
 **MediSense AI** is an AI-powered health assistant that helps users understand symptoms, find nearby specialists or pharmacies, and extract medicine names from prescriptions using OCR. Built with React, Express, and Spring Boot, it combines AI, OCR, geolocation, and scraping for a smart, lightweight healthcare solution.
