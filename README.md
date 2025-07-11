@@ -1,8 +1,6 @@
 # 🧠 MediSense AI - Symptoms to action     ### Completed Full
 
 
-> 🏆 **This project was built for the national-level hackathon _HackOrbit 2025_ organized by Digital Learning Group and MITS, Gwalior.**
-
 **MediSense AI** is an AI-powered health assistant that helps users understand symptoms, find nearby specialists or pharmacies, and extract medicine names from prescriptions using OCR. Built with React, Express, and Spring Boot, it combines AI, OCR, geolocation, and scraping for a smart, lightweight healthcare solution.
 
 ## 🩺 Features
