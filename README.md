@@ -38,7 +38,7 @@
 
 ### 1. Clone the repo
 
-git clone https://github.com/Anand0047/HackOrbit-MediSenseAI.git
+git clone https://github.com/Anand0047/MediSenseAI.git
 cd HackOrbit-MediSenseAI
 2. Install dependencies
 
